@@ -24,13 +24,16 @@ models.Base.metadata.create_all(bind=engine)
 app = FastAPI(title="WAR Project API")
 
 # Trust Next.js frontend
+# Trust Next.js frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    # Yahan maine localhost ke saath tumhari live site ka URL bhi add kar diya hai
+    allow_origins=["http://localhost:3000", "https://war-frontend-psi.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # Database Dependency
 def get_db():
