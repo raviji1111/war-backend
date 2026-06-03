@@ -7,7 +7,7 @@ import jwt
 import razorpay
 from datetime import datetime, timedelta
 from pydantic import BaseModel
-
+from models import User
 import models
 import schemas
 from database import engine, SessionLocal
@@ -275,6 +275,9 @@ def get_all_feedbacks(admin: models.User = Depends(get_admin_user), db: Session 
     feedbacks = db.query(models.UserFeedback).all()
     return {"feedbacks": feedbacks}
 
-
+# main.py ke end mein ye add kar do
+@app.get("/users/me")
+async def get_me(current_user: User = Depends(get_current_user)):
+    return {"email": current_user.email}
 
     
