@@ -76,7 +76,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
 def read_root():
     return {"status": "success", "message": "WAR Project server is running!"}
 
-# SIGNUP ROUTE
+# # SIGNUP ROUTE
 @app.post("/signup") 
 def signup(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
     existing_user = db.query(models.User).filter(
@@ -90,7 +90,10 @@ def signup(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
         if existing_user.username == user_data.username:
             raise HTTPException(status_code=400, detail="User ID already taken! Choose another one.")
 
-    hashed_pwd = pwd_context.hash(user_data.password)
+    # FIX: Yahan hum password ko 72 characters tak limit/truncate kar rahe hain
+    # Taaki bcrypt error na de.
+    hashed_pwd = pwd_context.hash(user_data.password[:72])
+
     new_user = models.User(
         name=user_data.name,
         username=user_data.username,
