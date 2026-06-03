@@ -73,8 +73,4 @@ class QuizSubmit(BaseModel):
     time_taken_seconds: int
 
 
-    from pydantic import BaseModel
-
-class AnswerSchema(BaseModel):
-    selected_option: str
-    time_taken_seconds: int
+    

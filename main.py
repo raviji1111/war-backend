@@ -12,11 +12,7 @@ import models
 import schemas
 from database import engine, SessionLocal
 
-from schemas import AnswerSchema       # Ye AnswerSchema ke liye
-from models import User, UserAttempt   # Ye User aur UserAttempt ke liye
-from database import get_db            # Ye database session ke liye
-from sqlalchemy.orm import Session     # Ye db type ke liye
-from fastapi import Depends, HTTPException # FastAPI ke liye
+
 
 # --- SECURITY SETTINGS ---
 # CryptContext hata diya, ab direct bcrypt use karenge
@@ -279,25 +275,6 @@ def get_all_feedbacks(admin: models.User = Depends(get_admin_user), db: Session 
     feedbacks = db.query(models.UserFeedback).all()
     return {"feedbacks": feedbacks}
 
-
-@app.post("/quizzes/{quiz_id}/submit")
-async def submit_quiz(
-    quiz_id: int, 
-    data: AnswerSchema, 
-    current_user: User = Depends(get_current_user), 
-    db: Session = Depends(get_db) # Yahan 'db' inject karna zaroori hai
-):
-    # 1. PEHLE CHECK KARO: Kya user ne ye quiz pehle attempt ki hai?
-    already_attempted = db.query(UserAttempt).filter(
-        UserAttempt.user_id == current_user.id,
-        UserAttempt.quiz_id == quiz_id
-    ).first()
-
-    if already_attempted:
-        # Error return karne ka sahi tarika:
-        raise HTTPException(status_code=400, detail="Already attempted")
-
-    # ... aage ka code yahan likh ...
 
 
     
