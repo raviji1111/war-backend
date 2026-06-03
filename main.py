@@ -109,7 +109,9 @@ def signup(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
 @app.post("/token")
 def login_for_access_token(username: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
     db_user = db.query(models.User).filter(models.User.email == username).first()
-    if not db_user or not pwd_context.verify(password, db_user.hashed_password):
+    
+    # FIX: password[:72] use karo taaki verify function crash na ho
+    if not db_user or not pwd_context.verify(password[:72], db_user.hashed_password):
         raise HTTPException(status_code=400, detail="Invalid credentials")
     
     access_token = create_access_token(data={"sub": db_user.email})
@@ -122,7 +124,9 @@ def login(user_data: dict, db: Session = Depends(get_db)):
     password = user_data.get("password")
     
     db_user = db.query(models.User).filter(models.User.email == email).first()
-    if not db_user or not pwd_context.verify(password, db_user.hashed_password):
+    
+    # FIX: password[:72] use karo
+    if not db_user or not pwd_context.verify(password[:72], db_user.hashed_password):
         raise HTTPException(status_code=400, detail="Invalid credentials")
     
     access_token = create_access_token(data={"sub": db_user.email})
