@@ -286,67 +286,53 @@ async def get_me(current_user: User = Depends(get_current_user)):
     
 
     # --- AI CHAT LOGIC ---
+# --- AI CHAT LOGIC ---
 class ChatRequest(BaseModel):
     message: str
 
-@app.post("/api/kimi-chat")
+# 1. Text Route
+@app.post("/api/chat")
 async def chat_with_model(request: ChatRequest):
-    # Render ke Environment Variables se key uthayege
-    api_key = os.getenv("NVIDIA_API_KEY")
-    model_name = os.getenv("MODEL_NAME", "moonshotai/kimi-k2.6") 
-    
-    invoke_url = "https://integrate.api.nvidia.com/v1/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json"
-    }
-    
-    payload = {
-        "model": model_name,
-        "messages": [{"role": "user", "content": request.message}],
-        "max_tokens": 1024,
-        "temperature": 0.7,
-        "stream": False
-    }
-
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.post(invoke_url, headers=headers, json=payload, timeout=60.0)
-            if response.status_code != 200:
-                raise HTTPException(status_code=response.status_code, detail=response.text)
-            return response.json()
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
-        
-        # --- AI CHAT LOGIC ---
-class ChatRequest(BaseModel):
-    message: str
-
-@app.post("/api/kimi-chat")
-async def chat_with_model(request: ChatRequest):
-    # Render Dashboard mein NVIDIA_API_KEY set karo, yahan hardcode mat karna!
     api_key = os.getenv("NVIDIA_API_KEY") 
     model_name = os.getenv("MODEL_NAME", "moonshotai/kimi-k2.6")
     
     invoke_url = "https://integrate.api.nvidia.com/v1/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json"
-    }
-    
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     payload = {
         "model": model_name,
         "messages": [{"role": "user", "content": request.message}],
-        "max_tokens": 1024,
-        "temperature": 0.7,
-        "stream": False
+        "max_tokens": 1024, "temperature": 0.7, "stream": False
     }
 
     async with httpx.AsyncClient() as client:
         try:
             response = await client.post(invoke_url, headers=headers, json=payload, timeout=60.0)
-            if response.status_code != 200:
-                raise HTTPException(status_code=response.status_code, detail=response.text)
+            return response.json()
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+# 2. Vision Route (Make sure koi space na ho decorator ke niche)
+@app.post("/api/kimi-vision")
+async def chat_with_vision(data: dict):
+    message = data.get("message", "")
+    image_base64 = data.get("image")
+    api_key = os.getenv("NVIDIA_API_KEY")
+    invoke_url = "https://integrate.api.nvidia.com/v1/chat/completions"
+    
+    content = [{"type": "text", "text": message}]
+    if image_base64:
+        content.append({"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"}})
+
+    payload = {
+        "model": "moonshotai/kimi-k2.6",
+        "messages": [{"role": "user", "content": content}],
+        "max_tokens": 1024,
+        "temperature": 0.7
+    }
+
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(invoke_url, headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}, json=payload, timeout=60.0)
             return response.json()
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
