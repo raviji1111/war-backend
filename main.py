@@ -292,8 +292,41 @@ class ChatRequest(BaseModel):
 @app.post("/api/kimi-chat")
 async def chat_with_model(request: ChatRequest):
     # Render ke Environment Variables se key uthayege
-    api_key = os.getenv("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")
+    api_key = os.getenv("NVIDIA_API_KEY")
     model_name = os.getenv("MODEL_NAME", "moonshotai/kimi-k2.6") 
+    
+    invoke_url = "https://integrate.api.nvidia.com/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+    
+    payload = {
+        "model": model_name,
+        "messages": [{"role": "user", "content": request.message}],
+        "max_tokens": 1024,
+        "temperature": 0.7,
+        "stream": False
+    }
+
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(invoke_url, headers=headers, json=payload, timeout=60.0)
+            if response.status_code != 200:
+                raise HTTPException(status_code=response.status_code, detail=response.text)
+            return response.json()
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+        
+        # --- AI CHAT LOGIC ---
+class ChatRequest(BaseModel):
+    message: str
+
+@app.post("/api/kimi-chat")
+async def chat_with_model(request: ChatRequest):
+    # Render Dashboard mein NVIDIA_API_KEY set karo, yahan hardcode mat karna!
+    api_key = os.getenv("NVIDIA_API_KEY") 
+    model_name = os.getenv("MODEL_NAME", "moonshotai/kimi-k2.6")
     
     invoke_url = "https://integrate.api.nvidia.com/v1/chat/completions"
     headers = {
